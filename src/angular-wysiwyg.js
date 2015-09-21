@@ -28,13 +28,9 @@ Requires:
 (function(angular, undefined) {
 
     'use strict';
-
     var DEFAULT_MENU = [
-        ['bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript'],
+        ['bold', 'italic', 'underline'],
         ['format-block'],
-        ['font'],
-        ['font-size'],
-        ['font-color', 'hilite-color'],
         ['remove-format'],
         ['ordered-list', 'unordered-list', 'outdent', 'indent'],
         ['left-justify', 'center-justify', 'right-justify'],
@@ -42,7 +38,7 @@ Requires:
         ['link', 'image']
     ];
 
-    angular.module('wysiwyg.module', ['colorpicker.module'])
+    angular.module('wysiwyg.module', [])
         .directive('wysiwyg', function($timeout, wysiwgGui, $compile) {
             return {
                 template: '<div>' +
@@ -50,7 +46,6 @@ Requires:
                     '   .wysiwyg-textarea[contentEditable="false"] { background-color:#eee}' +
                     '   .wysiwyg-btn-group-margin { margin-right:5px; }' +
                     '   .wysiwyg-select { height:30px;margin-bottom:1px;}' +
-                    '   .wysiwyg-colorpicker { font-family: arial, sans-serif !important;font-size:16px !important; padding:2px 10px !important;}' +
                     '</style>' +
                     '<div class="wysiwyg-menu"></div>' +
                     '<div id="{{textareaId}}" ng-attr-style="resize:vertical;height:{{textareaHeight || \'80px\'}}; overflow:auto" contentEditable="{{!disabled}}" class="{{textareaClass}} wysiwyg-textarea" rows="{{textareaRows}}" name="{{textareaName}}" required="{{textareaRequired}}" placeholder="{{textareaPlaceholder}}" ng-model="value"></div>' +
@@ -80,79 +75,34 @@ Requires:
 
                 scope.isLink = false;
 
-                scope.fontSizes = [{
-                    value: '1',
-                    size: '10px'
-                }, {
-                    value: '2',
-                    size: '13px'
-                }, {
-                    value: '3',
-                    size: '16px'
-                }, {
-                    value: '4',
-                    size: '18px'
-                }, {
-                    value: '5',
-                    size: '24px'
-                }, {
-                    value: '6',
-                    size: '32px'
-                }, {
-                    value: '7',
-                    size: '48px'
-                }];
-
                 scope.formatBlocks = [{
                     name: 'Heading Blocks',
                     value: 'div'
                 }, {
-                    name: 'Heading 1',
+                    name: '标题1',
                     value: 'h1'
                 }, {
-                    name: 'Heading 2',
+                    name: '标题2',
                     value: 'h2'
                 }, {
-                    name: 'Heading 3',
+                    name: '标题3',
                     value: 'h3'
                 }, {
-                    name: 'Heading 4',
+                    name: '标题4',
                     value: 'h4'
                 }, {
-                    name: 'Heading 5',
+                    name: '标题5',
                     value: 'h5'
                 }, {
-                    name: 'Heading 6',
+                    name: '标题6',
                     value: 'h6'
                 }, ];
                 scope.formatBlock = scope.formatBlocks[0];
-
-                scope.fontSize = scope.fontSizes[1];
 
                 if (angular.isArray(scope.cssClasses)) {
                     scope.cssClasses.unshift('css');
                     scope.cssClass = scope.cssClasses[0];
                 }
-
-                scope.fonts = [
-                    'Georgia',
-                    'Palatino Linotype',
-                    'Times New Roman',
-                    'Arial',
-                    'Helvetica',
-                    'Arial Black',
-                    'Comic Sans MS',
-                    'Impact',
-                    'Lucida Sans Unicode',
-                    'Tahoma',
-                    'Trebuchet MS',
-                    'Verdana',
-                    'Courier New',
-                    'Lucida Console',
-                    'Helvetica Neue'
-                ].sort();
-
-                scope.font = scope.fonts[6];
 
                 init();
 
@@ -232,10 +182,7 @@ Requires:
                         $timeout(function() {
                             scope.isBold = scope.cmdState('bold');
                             scope.isUnderlined = scope.cmdState('underline');
-                            scope.isStrikethrough = scope.cmdState('strikethrough');
-                            scope.isItalic = scope.cmdState('italic');
-                            scope.isSuperscript = itemIs('SUP'); //scope.cmdState('superscript');
-                            scope.isSubscript = itemIs('SUB'); //scope.cmdState('subscript');    
+                            scope.isItalic = scope.cmdState('italic');   
                             scope.isRightJustified = scope.cmdState('justifyright');
                             scope.isLeftJustified = scope.cmdState('justifyleft');
                             scope.isCenterJustified = scope.cmdState('justifycenter');
@@ -245,12 +192,6 @@ Requires:
                             scope.isOrderedList = scope.cmdState('insertorderedlist');
                             scope.isUnorderedList = scope.cmdState('insertunorderedlist');
 
-                            scope.fonts.forEach(function(v, k) { //works but kinda crappy.
-                                if (scope.cmdValue('fontname').indexOf(v) > -1) {
-                                    scope.font = v;
-                                    return false;
-                                }
-                            });
                             scope.cmdValue('formatblock').toLowerCase();
                             scope.formatBlocks.forEach(function(v, k) {
                                 if (scope.cmdValue('formatblock').toLowerCase() === v.value.toLowerCase()) {
@@ -258,19 +199,6 @@ Requires:
                                     return false;
                                 }
                             });
-
-                            scope.fontSizes.forEach(function(v, k) {
-                                if (scope.cmdValue('fontsize') === v.value) {
-                                    scope.fontSize = v;
-                                    return false;
-                                }
-                            });
-
-                            scope.hiliteColor = getHiliteColor();
-                            element.find('button.wysiwyg-hiliteColor').css('background-color', scope.hiliteColor);
-
-                            scope.fontColor = scope.cmdValue('forecolor');
-                            element.find('button.wysiwyg-fontcolor').css('color', scope.fontColor);
 
                             scope.isLink = itemIs('A');
 
@@ -289,27 +217,6 @@ Requires:
                         }
                     } else {
                         return false;
-                    }
-                }
-
-                //Used to detect things like A tags and others that dont work with cmdValue().
-                function getHiliteColor() {
-                    var selection = window.getSelection().getRangeAt(0);
-                    if (selection) {
-                        var style = angular.element(selection.startContainer.parentNode).attr('style');
-
-                        if (!angular.isDefined(style))
-                            return false;
-
-                        var a = style.split(';');
-                        for (var i = 0; i < a.length; i++) {
-                            var s = a[i].split(':');
-                            if (s[0] === 'background-color')
-                                return s[1];
-                        }
-                        return '#fff';
-                    } else {
-                        return '#fff';
                     }
                 }
 
@@ -342,24 +249,8 @@ Requires:
                         scope.format('insertimage', input);
                 };
 
-                scope.setFont = function() {
-                    scope.format('fontname', scope.font);
-                };
-
-                scope.setFontSize = function() {
-                    scope.format('fontsize', scope.fontSize.value);
-                };
-
                 scope.setFormatBlock = function() {
                     scope.format('formatBlock', scope.formatBlock.value);
-                };
-
-                scope.setFontColor = function() {
-                    scope.format('forecolor', scope.fontColor);
-                };
-
-                scope.setHiliteColor = function() {
-                    scope.format('hiliteColor', scope.hiliteColor);
                 };
 
                 scope.format('enableobjectresizing', true);
@@ -428,7 +319,6 @@ Requires:
                 } else if (obj.text) {
                     el = document.createElement('span');
                 } else {
-                    console.log('cannot create this element.');
                     el = document.createElement('span');
                     return el;
                 }
@@ -477,7 +367,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Bold'
+                    value: '粗体'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'bold\')'
@@ -498,7 +388,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Italic'
+                    value: '斜体'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'italic\')'
@@ -519,7 +409,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Underline'
+                    value: '下划线'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'underline\')'
@@ -535,75 +425,12 @@ Requires:
                     classes: 'fa fa-underline'
                 }]
             },
-            'strikethrough': {
-                tag: 'button',
-                classes: 'btn btn-default',
-                attributes: [{
-                    name: 'title',
-                    value: 'Strikethrough'
-                }, {
-                    name: 'ng-click',
-                    value: 'format(\'strikethrough\')'
-                }, {
-                    name: 'ng-class',
-                    value: '{ active: isStrikethrough }'
-                }, {
-                    name: 'type',
-                    value: 'button'
-                }],
-                data: [{
-                    tag: 'i',
-                    classes: 'fa fa-strikethrough'
-                }]
-            },
-            'subscript': {
-                tag: 'button',
-                classes: 'btn btn-default',
-                attributes: [{
-                    name: 'title',
-                    value: 'Subscript'
-                }, {
-                    name: 'ng-click',
-                    value: 'format(\'subscript\')'
-                }, {
-                    name: 'ng-class',
-                    value: '{ active: isSubscript }'
-                }, {
-                    name: 'type',
-                    value: 'button'
-                }],
-                data: [{
-                    tag: 'i',
-                    classes: 'fa fa-subscript'
-                }]
-            },
-            'superscript': {
-                tag: 'button',
-                classes: 'btn btn-default',
-                attributes: [{
-                    name: 'title',
-                    value: 'Superscript'
-                }, {
-                    name: 'ng-click',
-                    value: 'format(\'superscript\')'
-                }, {
-                    name: 'ng-class',
-                    value: '{ active: isSuperscript }'
-                }, {
-                    name: 'type',
-                    value: 'button'
-                }],
-                data: [{
-                    tag: 'i',
-                    classes: 'fa fa-superscript'
-                }]
-            },
             'remove-format': {
                 tag: 'button',
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Remove Formatting'
+                    value: '移除格式'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'removeFormat\')'
@@ -621,7 +448,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Ordered List'
+                    value: '编号列表'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'insertorderedlist\')'
@@ -642,7 +469,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Unordered List'
+                    value: '无序列表'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'insertunorderedlist\')'
@@ -663,7 +490,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Outdent'
+                    value: '减少缩进'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'outdent\')'
@@ -681,7 +508,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Indent'
+                    value: '增加缩进'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'indent\')'
@@ -699,7 +526,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Left Justify'
+                    value: '左对齐'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'justifyleft\')'
@@ -720,7 +547,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Center Justify'
+                    value: '居中'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'justifycenter\')'
@@ -741,7 +568,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Right Justify'
+                    value: '右对齐'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'justifyright\')'
@@ -757,33 +584,12 @@ Requires:
                     classes: 'fa fa-align-right'
                 }]
             },
-            'code': {
-                tag: 'button',
-                classes: 'btn btn-default',
-                attributes: [{
-                    name: 'title',
-                    value: 'Code'
-                }, {
-                    name: 'ng-click',
-                    value: 'format(\'formatblock\', \'pre\')'
-                }, {
-                    name: 'ng-class',
-                    value: '{ active: isPre }'
-                }, {
-                    name: 'type',
-                    value: 'button'
-                }],
-                data: [{
-                    tag: 'i',
-                    classes: 'fa fa-code'
-                }]
-            },
             'quote': {
                 tag: 'button',
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Quote'
+                    value: '引用'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'formatblock\', \'blockquote\')'
@@ -805,7 +611,7 @@ Requires:
                 text: 'P',
                 attributes: [{
                     name: 'title',
-                    value: 'Paragragh'
+                    value: '段落'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'insertParagraph\')'
@@ -822,7 +628,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Image'
+                    value: '插入图片'
                 }, {
                     name: 'ng-click',
                     value: 'insertImage()'
@@ -835,94 +641,12 @@ Requires:
                     classes: 'fa fa-picture-o'
                 }]
             },
-            'font-color': {
-                tag: 'button',
-                classes: 'btn btn-default wysiwyg-colorpicker wysiwyg-fontcolor',
-                text: 'A',
-                attributes: [{
-                    name: 'title',
-                    value: 'Font Color'
-                }, {
-                    name: 'colorpicker',
-                    value: 'rgba'
-                }, {
-                    name: 'colorpicker-position',
-                    value: 'top'
-                }, {
-                    name: 'ng-model',
-                    value: 'fontColor'
-                }, {
-                    name: 'ng-change',
-                    value: 'setFontColor()'
-                }, {
-                    name: 'type',
-                    value: 'button'
-                }]
-            },
-            'hilite-color': {
-                tag: 'button',
-                classes: 'btn btn-default wysiwyg-colorpicker wysiwyg-fontcolor',
-                text: 'H',
-                attributes: [{
-                    name: 'title',
-                    value: 'Hilite Color'
-                }, {
-                    name: 'colorpicker',
-                    value: 'rgba'
-                }, {
-                    name: 'colorpicker-position',
-                    value: 'top'
-                }, {
-                    name: 'ng-model',
-                    value: 'hiliteColor'
-                }, {
-                    name: 'ng-change',
-                    value: 'setHiliteColor()'
-                }, {
-                    name: 'type',
-                    value: 'button'
-                }]
-            },
-            'font': {
-                tag: 'select',
-                classes: 'form-control wysiwyg-select',
-                attributes: [{
-                    name: 'title',
-                    value: 'Image'
-                }, {
-                    name: 'ng-model',
-                    value: 'font'
-                }, {
-                    name: 'ng-options',
-                    value: 'f for f in fonts'
-                }, {
-                    name: 'ng-change',
-                    value: 'setFont()'
-                }]
-            },
-            'font-size': {
-                tag: 'select',
-                classes: 'form-control wysiwyg-select',
-                attributes: [{
-                    name: 'title',
-                    value: 'Image'
-                }, {
-                    name: 'ng-model',
-                    value: 'fontSize'
-                }, {
-                    name: 'ng-options',
-                    value: 'f.size for f in fontSizes'
-                }, {
-                    name: 'ng-change',
-                    value: 'setFontSize()'
-                }]
-            },
             'format-block': {
                 tag: 'select',
                 classes: 'form-control wysiwyg-select',
                 attributes: [{
                     name: 'title',
-                    value: 'Format Block'
+                    value: '格式'
                 }, {
                     name: 'ng-model',
                     value: 'formatBlock'
@@ -939,7 +663,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Link'
+                    value: '插入链接'
                 }, {
                     name: 'ng-click',
                     value: 'createLink()'
@@ -960,7 +684,7 @@ Requires:
                 classes: 'btn btn-default',
                 attributes: [{
                     name: 'title',
-                    value: 'Unlink'
+                    value: '取消链接'
                 }, {
                     name: 'ng-click',
                     value: 'format(\'unlink\')'

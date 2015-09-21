@@ -29,18 +29,9 @@ Requires:
       [
         'bold',
         'italic',
-        'underline',
-        'strikethrough',
-        'subscript',
-        'superscript'
+        'underline'
       ],
       ['format-block'],
-      ['font'],
-      ['font-size'],
-      [
-        'font-color',
-        'hilite-color'
-      ],
       ['remove-format'],
       [
         'ordered-list',
@@ -63,13 +54,13 @@ Requires:
         'image'
       ]
     ];
-  angular.module('wysiwyg.module', ['colorpicker.module']).directive('wysiwyg', [
+  angular.module('wysiwyg.module', []).directive('wysiwyg', [
     '$timeout',
     'wysiwgGui',
     '$compile',
     function ($timeout, wysiwgGui, $compile) {
       return {
-        template: '<div>' + '<style>' + '   .wysiwyg-textarea[contentEditable="false"] { background-color:#eee}' + '   .wysiwyg-btn-group-margin { margin-right:5px; }' + '   .wysiwyg-select { height:30px;margin-bottom:1px;}' + '   .wysiwyg-colorpicker { font-family: arial, sans-serif !important;font-size:16px !important; padding:2px 10px !important;}' + '</style>' + '<div class="wysiwyg-menu"></div>' + '<div id="{{textareaId}}" ng-attr-style="resize:vertical;height:{{textareaHeight || \'80px\'}}; overflow:auto" contentEditable="{{!disabled}}" class="{{textareaClass}} wysiwyg-textarea" name="{{textareaName}}" ng-model="value"></div>' + '</div>',
+        template: '<div>' + '<style>' + '   .wysiwyg-textarea[contentEditable="false"] { background-color:#eee}' + '   .wysiwyg-btn-group-margin { margin-right:5px; }' + '   .wysiwyg-select { height:30px;margin-bottom:1px;}' + '   .wysiwyg-colorpicker { font-family: arial, sans-serif !important;font-size:16px !important; padding:2px 10px !important;}' + '</style>' + '<div class="wysiwyg-menu"></div>' + '<div id="{{textareaId}}" ng-attr-style="resize:vertical;height:{{textareaHeight || \'80px\'}}; overflow:auto" contentEditable="{{!disabled}}" class="{{textareaClass}} wysiwyg-textarea" rows="{{textareaRows}}" name="{{textareaName}}" required="{{textareaRequired}}" placeholder="{{textareaPlaceholder}}" ng-model="value"></div>' + '</div>',
         restrict: 'E',
         scope: {
           value: '=ngModel',
@@ -81,7 +72,7 @@ Requires:
           textareaMenu: '=textareaMenu',
           textareaCustomMenu: '=textareaCustomMenu',
           fn: '&',
-          disabled: '=?disabledArea'
+          disabled: '=?disabled'
         },
         replace: true,
         require: 'ngModel',
@@ -91,90 +82,41 @@ Requires:
       function link(scope, element, attrs, ngModelController) {
         var textarea = element.find('div.wysiwyg-textarea');
         scope.isLink = false;
-        scope.fontSizes = [
-          {
-            value: '1',
-            size: '10px'
-          },
-          {
-            value: '2',
-            size: '13px'
-          },
-          {
-            value: '3',
-            size: '16px'
-          },
-          {
-            value: '4',
-            size: '18px'
-          },
-          {
-            value: '5',
-            size: '24px'
-          },
-          {
-            value: '6',
-            size: '32px'
-          },
-          {
-            value: '7',
-            size: '48px'
-          }
-        ];
         scope.formatBlocks = [
           {
             name: 'Heading Blocks',
             value: 'div'
           },
           {
-            name: 'Heading 1',
+            name: '\u6807\u98981',
             value: 'h1'
           },
           {
-            name: 'Heading 2',
+            name: '\u6807\u98982',
             value: 'h2'
           },
           {
-            name: 'Heading 3',
+            name: '\u6807\u98983',
             value: 'h3'
           },
           {
-            name: 'Heading 4',
+            name: '\u6807\u98984',
             value: 'h4'
           },
           {
-            name: 'Heading 5',
+            name: '\u6807\u98985',
             value: 'h5'
           },
           {
-            name: 'Heading 6',
+            name: '\u6807\u98986',
             value: 'h6'
           }
         ];
         scope.formatBlock = scope.formatBlocks[0];
-        scope.fontSize = scope.fontSizes[1];
         if (angular.isArray(scope.cssClasses)) {
           scope.cssClasses.unshift('css');
           scope.cssClass = scope.cssClasses[0];
         }
-        scope.fonts = [
-          'Georgia',
-          'Palatino Linotype',
-          'Times New Roman',
-          'Arial',
-          'Helvetica',
-          'Arial Black',
-          'Comic Sans MS',
-          'Impact',
-          'Lucida Sans Unicode',
-          'Tahoma',
-          'Trebuchet MS',
-          'Verdana',
-          'Courier New',
-          'Lucida Console',
-          'Helvetica Neue'
-        ].sort();
-        scope.font = scope.fonts[6];
         init();
         function init() {
           compileMenu();
@@ -236,12 +178,7 @@ Requires:
             $timeout(function () {
               scope.isBold = scope.cmdState('bold');
               scope.isUnderlined = scope.cmdState('underline');
-              scope.isStrikethrough = scope.cmdState('strikethrough');
               scope.isItalic = scope.cmdState('italic');
-              scope.isSuperscript = itemIs('SUP');
-              //scope.cmdState('superscript');
-              scope.isSubscript = itemIs('SUB');
-              //scope.cmdState('subscript');    
               scope.isRightJustified = scope.cmdState('justifyright');
               scope.isLeftJustified = scope.cmdState('justifyleft');
               scope.isCenterJustified = scope.cmdState('justifycenter');
@@ -249,13 +186,12 @@ Requires:
               scope.isBlockquote = scope.cmdValue('formatblock') === 'blockquote';
               scope.isOrderedList = scope.cmdState('insertorderedlist');
               scope.isUnorderedList = scope.cmdState('insertunorderedlist');
-              scope.fonts.forEach(function (v, k) {
-                //works but kinda crappy.
-                if (scope.cmdValue('fontname').indexOf(v) > -1) {
-                  scope.font = v;
-                  return false;
-                }
-              });
+              // scope.fonts.forEach(function(v, k) { //works but kinda crappy.
+              //     if (scope.cmdValue('fontname').indexOf(v) > -1) {
+              //         scope.font = v;
+              //         return false;
+              //     }
+              // });
               scope.cmdValue('formatblock').toLowerCase();
               scope.formatBlocks.forEach(function (v, k) {
                 if (scope.cmdValue('formatblock').toLowerCase() === v.value.toLowerCase()) {
@@ -263,16 +199,6 @@ Requires:
                   return false;
                 }
               });
-              scope.fontSizes.forEach(function (v, k) {
-                if (scope.cmdValue('fontsize') === v.value) {
-                  scope.fontSize = v;
-                  return false;
-                }
-              });
-              scope.hiliteColor = getHiliteColor();
-              element.find('button.wysiwyg-hiliteColor').css('background-color', scope.hiliteColor);
-              scope.fontColor = scope.cmdValue('forecolor');
-              element.find('button.wysiwyg-fontcolor').css('color', scope.fontColor);
               scope.isLink = itemIs('A');
             }, 0);
           });
@@ -288,24 +214,6 @@ Requires:
             }
           } else {
             return false;
-          }
-        }
-        //Used to detect things like A tags and others that dont work with cmdValue().
-        function getHiliteColor() {
-          var selection = window.getSelection().getRangeAt(0);
-          if (selection) {
-            var style = angular.element(selection.startContainer.parentNode).attr('style');
-            if (!angular.isDefined(style))
-              return false;
-            var a = style.split(';');
-            for (var i = 0; i < a.length; i++) {
-              var s = a[i].split(':');
-              if (s[0] === 'background-color')
-                return s[1];
-            }
-            return '#fff';
-          } else {
-            return '#fff';
           }
         }
         // model -> view
@@ -331,20 +239,8 @@ Requires:
           if (input && input !== undefined)
             scope.format('insertimage', input);
         };
-        scope.setFont = function () {
-          scope.format('fontname', scope.font);
-        };
-        scope.setFontSize = function () {
-          scope.format('fontsize', scope.fontSize.value);
-        };
         scope.setFormatBlock = function () {
           scope.format('formatBlock', scope.formatBlock.value);
-        };
-        scope.setFontColor = function () {
-          scope.format('forecolor', scope.fontColor);
-        };
-        scope.setHiliteColor = function () {
-          scope.format('hiliteColor', scope.hiliteColor);
         };
         scope.format('enableobjectresizing', true);
         scope.format('styleWithCSS', true);
@@ -406,12 +302,8 @@ Requires:
         }
         if (obj.text && document.all) {
           el.innerText = obj.text;
-        } else {
-          if(obj.text){
-                el.textContent = obj.text;
-            }else{
-                el.textContent = "";
-            }
+        } else if (obj.text) {
+          el.textContent = obj.text;
         }
         if (obj.classes) {
           el.className = obj.classes;
@@ -446,7 +338,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Bold'
+          value: '\u7c97\u4f53'
         },
         {
           name: 'ng-click',
@@ -472,7 +364,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Italic'
+          value: '\u659c\u4f53'
         },
         {
           name: 'ng-click',
@@ -498,7 +390,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Underline'
+          value: '\u4e0b\u5212\u7ebf'
         },
         {
           name: 'ng-click',
@@ -518,91 +410,13 @@ Requires:
           classes: 'fa fa-underline'
         }]
     },
-    'strikethrough': {
-      tag: 'button',
-      classes: 'btn btn-default',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Strikethrough'
-        },
-        {
-          name: 'ng-click',
-          value: 'format(\'strikethrough\')'
-        },
-        {
-          name: 'ng-class',
-          value: '{ active: isStrikethrough }'
-        },
-        {
-          name: 'type',
-          value: 'button'
-        }
-      ],
-      data: [{
-          tag: 'i',
-          classes: 'fa fa-strikethrough'
-        }]
-    },
-    'subscript': {
-      tag: 'button',
-      classes: 'btn btn-default',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Subscript'
-        },
-        {
-          name: 'ng-click',
-          value: 'format(\'subscript\')'
-        },
-        {
-          name: 'ng-class',
-          value: '{ active: isSubscript }'
-        },
-        {
-          name: 'type',
-          value: 'button'
-        }
-      ],
-      data: [{
-          tag: 'i',
-          classes: 'fa fa-subscript'
-        }]
-    },
-    'superscript': {
-      tag: 'button',
-      classes: 'btn btn-default',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Superscript'
-        },
-        {
-          name: 'ng-click',
-          value: 'format(\'superscript\')'
-        },
-        {
-          name: 'ng-class',
-          value: '{ active: isSuperscript }'
-        },
-        {
-          name: 'type',
-          value: 'button'
-        }
-      ],
-      data: [{
-          tag: 'i',
-          classes: 'fa fa-superscript'
-        }]
-    },
     'remove-format': {
       tag: 'button',
       classes: 'btn btn-default',
       attributes: [
         {
           name: 'title',
-          value: 'Remove Formatting'
+          value: '\u79fb\u9664\u683c\u5f0f'
         },
         {
           name: 'ng-click',
@@ -624,7 +438,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Ordered List'
+          value: '\u7f16\u53f7\u5217\u8868'
         },
         {
           name: 'ng-click',
@@ -650,7 +464,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Unordered List'
+          value: '\u65e0\u5e8f\u5217\u8868'
         },
         {
           name: 'ng-click',
@@ -676,7 +490,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Outdent'
+          value: '\u51cf\u5c11\u7f29\u8fdb'
         },
         {
           name: 'ng-click',
@@ -698,7 +512,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Indent'
+          value: '\u589e\u52a0\u7f29\u8fdb'
         },
         {
           name: 'ng-click',
@@ -720,7 +534,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Left Justify'
+          value: '\u5de6\u5bf9\u9f50'
         },
         {
           name: 'ng-click',
@@ -746,7 +560,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Center Justify'
+          value: '\u5c45\u4e2d'
         },
         {
           name: 'ng-click',
@@ -772,7 +586,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Right Justify'
+          value: '\u53f3\u5bf9\u9f50'
         },
         {
           name: 'ng-click',
@@ -792,39 +606,13 @@ Requires:
           classes: 'fa fa-align-right'
         }]
     },
-    'code': {
-      tag: 'button',
-      classes: 'btn btn-default',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Code'
-        },
-        {
-          name: 'ng-click',
-          value: 'format(\'formatblock\', \'pre\')'
-        },
-        {
-          name: 'ng-class',
-          value: '{ active: isPre }'
-        },
-        {
-          name: 'type',
-          value: 'button'
-        }
-      ],
-      data: [{
-          tag: 'i',
-          classes: 'fa fa-code'
-        }]
-    },
     'quote': {
       tag: 'button',
       classes: 'btn btn-default',
       attributes: [
         {
           name: 'title',
-          value: 'Quote'
+          value: '\u5f15\u7528'
         },
         {
           name: 'ng-click',
@@ -851,7 +639,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Paragragh'
+          value: '\u6bb5\u843d'
         },
         {
           name: 'ng-click',
@@ -873,7 +661,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Image'
+          value: '\u63d2\u5165\u56fe\u7247'
         },
         {
           name: 'ng-click',
@@ -889,119 +677,13 @@ Requires:
           classes: 'fa fa-picture-o'
         }]
     },
-    'font-color': {
-      tag: 'button',
-      classes: 'btn btn-default wysiwyg-colorpicker wysiwyg-fontcolor',
-      text: 'A',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Font Color'
-        },
-        {
-          name: 'colorpicker',
-          value: 'rgba'
-        },
-        {
-          name: 'colorpicker-position',
-          value: 'top'
-        },
-        {
-          name: 'ng-model',
-          value: 'fontColor'
-        },
-        {
-          name: 'ng-change',
-          value: 'setFontColor()'
-        },
-        {
-          name: 'type',
-          value: 'button'
-        }
-      ]
-    },
-    'hilite-color': {
-      tag: 'button',
-      classes: 'btn btn-default wysiwyg-colorpicker wysiwyg-fontcolor',
-      text: 'H',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Hilite Color'
-        },
-        {
-          name: 'colorpicker',
-          value: 'rgba'
-        },
-        {
-          name: 'colorpicker-position',
-          value: 'top'
-        },
-        {
-          name: 'ng-model',
-          value: 'hiliteColor'
-        },
-        {
-          name: 'ng-change',
-          value: 'setHiliteColor()'
-        },
-        {
-          name: 'type',
-          value: 'button'
-        }
-      ]
-    },
-    'font': {
-      tag: 'select',
-      classes: 'form-control wysiwyg-select',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Font'
-        },
-        {
-          name: 'ng-model',
-          value: 'font'
-        },
-        {
-          name: 'ng-options',
-          value: 'f for f in fonts'
-        },
-        {
-          name: 'ng-change',
-          value: 'setFont()'
-        }
-      ]
-    },
-    'font-size': {
-      tag: 'select',
-      classes: 'form-control wysiwyg-select',
-      attributes: [
-        {
-          name: 'title',
-          value: 'Image'
-        },
-        {
-          name: 'ng-model',
-          value: 'fontSize'
-        },
-        {
-          name: 'ng-options',
-          value: 'f.size for f in fontSizes'
-        },
-        {
-          name: 'ng-change',
-          value: 'setFontSize()'
-        }
-      ]
-    },
     'format-block': {
       tag: 'select',
       classes: 'form-control wysiwyg-select',
       attributes: [
         {
           name: 'title',
-          value: 'Format Block'
+          value: '\u683c\u5f0f'
         },
         {
           name: 'ng-model',
@@ -1023,7 +705,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Link'
+          value: '\u63d2\u5165\u94fe\u63a5'
         },
         {
           name: 'ng-click',
@@ -1049,7 +731,7 @@ Requires:
       attributes: [
         {
           name: 'title',
-          value: 'Unlink'
+          value: '\u53d6\u6d88\u94fe\u63a5'
         },
         {
           name: 'ng-click',
